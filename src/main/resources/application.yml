@@ -1,0 +1,49 @@
+server:
+  port: 8088
+
+spring:
+  profiles:
+    group:
+      default:
+        - common
+        - local-app
+        - local-mysql
+
+---
+spring:
+  config:
+    activate:
+      on-profile: common
+  jpa:
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+logging:
+  level:
+    org.springframework.web.filter: debug
+  pattern:
+    dateformat: yyyy-MM-dd HH:mm:ss.SSSz,UTC
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local-app
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local-mysql
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:43306/bugbug
+    username: root
+    password: root
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      hibernate:
+        show_sql: true
+    hibernate:
+      ddl-auto: update
