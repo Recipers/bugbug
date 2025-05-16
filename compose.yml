@@ -1,0 +1,14 @@
+services:
+  mysql:
+    image: 'mysql:8.0.36'
+    environment:
+      - 'MYSQL_DATABASE=bugbug'
+      - 'MYSQL_PASSWORD=1234'
+      - 'MYSQL_ROOT_PASSWORD=1234'
+      - 'MYSQL_USER=myuser'
+    ports:
+      - '33306:3306'
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake

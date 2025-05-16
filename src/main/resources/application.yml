@@ -37,9 +37,9 @@ spring:
       on-profile: local-mysql
   datasource:
     driverClassName: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:43306/bugbug
-    username: root
-    password: root
+    url: jdbc:mysql://127.0.0.1:33306/bugbug
+    username: myuser
+    password: 1234
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     properties:
