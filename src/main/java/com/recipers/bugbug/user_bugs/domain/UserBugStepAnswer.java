@@ -1,7 +1,7 @@
 package com.recipers.bugbug.user_bugs.domain;
 
 
-import com.recipers.bugbug.bugs.common.BaseEntity;
+import com.recipers.bugbug.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
