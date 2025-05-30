@@ -1,33 +1,35 @@
 package com.recipers.bugbug.users.domain;
 
+import com.recipers.bugbug.bugs.common.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users")
-public class User {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class User extends BaseEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
+    @Column
     private String email;
-    
+
+    @Column
     private String passwordHash;
-    
+
+    @Column
     private String nickname;
-    
+
+    @Column
     private String socialProvider;
-    
+
+    @Column
     private String socialId;
-    
+
+    @Column
     private LocalDateTime createdAt;
-    
-    // 기본 생성자
-    public User() {}
-    
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
 }
