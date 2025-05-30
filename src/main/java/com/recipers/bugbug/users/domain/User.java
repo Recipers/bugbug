@@ -1,8 +1,7 @@
 package com.recipers.bugbug.users.domain;
 
-import com.recipers.bugbug.bugs.common.BaseEntity;
+import com.recipers.bugbug.common.BaseEntity;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -29,7 +28,4 @@ public class User extends BaseEntity {
 
     @Column
     private String socialId;
-
-    @Column
-    private LocalDateTime createdAt;
 }

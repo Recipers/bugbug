@@ -1,4 +1,4 @@
-package com.recipers.bugbug.bugs.common;
+package com.recipers.bugbug.common;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

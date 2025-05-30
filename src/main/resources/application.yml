@@ -14,11 +14,6 @@ spring:
   config:
     activate:
       on-profile: common
-  jpa:
-    hibernate:
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-      ddl-auto: create-drop
 logging:
   level:
     org.springframework.web.filter: debug
@@ -47,4 +42,10 @@ spring:
       hibernate:
         show_sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
+    defer-datasource-initialization: true # JPA DDL 실행 data.sql 실행
+    show-sql: true
+  sql:
+    init:
+      mode: always # mode에 따른 data.sql 실행 (always, embedded, never)
+      continue-on-error: false
