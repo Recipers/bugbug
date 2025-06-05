@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/config :: defaultHead('버그버그', ~{::script}, ~{::link})}"></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+    <div class="container">
+        <div class="section" id="case-intro">
+            <h2>사례 #1: 사라진 회원 데이터</h2>
+
+            <div class="scenario">
+                <h3>시나리오</h3>
+                <p>당신은 대형 e-커머스 회사의 백엔드 개발자입니다. 회원 가입 직후 해당 회원의 정보를 조회하는 API에서 간헐적으로 문제가 발생하고 있습니다.
+                   회원 가입은 성공적으로 완료되지만, 바로 이어서 회원 정보를 조회하면 가끔 데이터를 찾을 수 없다는 오류가 발생합니다.
+                   하지만 같은 API를 다시 호출하면 정상적으로 조회됩니다.</p>
+                <p>이 문제는 특히 트래픽이 많은 시간대에 더 자주 발생하고 있으며, 운영팀으로부터 긴급하게 해결을 요청받았습니다.</p>
+            </div>
+
+            <div class="clue-options">
+                <button class="btn btn-primary" onclick="showClue('application-config')">애플리케이션 설정 보기</button>
+                <button class="btn btn-primary" onclick="showClue('database-config')">데이터베이스 설정 보기</button>
+                <button class="btn btn-primary" onclick="showClue('code-structure')">코드 구조 보기</button>
+                <button class="btn btn-primary" onclick="showClue('error-logs')">에러 로그 보기</button>
+                <button class="btn btn-primary" onclick="showClue('db-logs')">데이터베이스 로그 보기</button>
+            </div>
+
+            <div id="application-config" class="clue hidden">
+                <h3>애플리케이션 설정</h3>
+                <div class="code-block">
+                    <div class="code-filename">application.yml</div>
+<pre>
+spring:
+  datasource:
+    url: jdbc:mysql://db-master.example.com:3306/userdb?useSSL=false
+    username: app_user
+    password: [REDACTED]
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      auto-commit: false  # 자동 커밋 설정 비활성화
+      maximum-pool-size: 10
+      minimum-idle: 5
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL57Dialect
+        show_sql: true
+        format_sql: true
+    open-in-view: true  # Open Session In View 패턴 활성화
+</pre>
+                </div>
+            </div>
+
+            <div id="database-config" class="clue hidden">
+                <h3>데이터베이스 설정</h3>
+                <div class="code-block">
+<pre>
+MySQL 버전: 5.7.38-log
+트랜잭션 격리 수준: REPEATABLE READ (기본값)
+읽기/쓰기 분리: 적용됨 (Master-Slave 구조)
+Connection Pool: HikariCP
+</pre>
+                </div>
+                <p>Master-Slave 구성에서 쓰기 작업은 Master로, 읽기 작업은 Slave로 라우팅됩니다.
+                   단, @Transactional(readOnly = false) 또는 @Transactional 설정이 있는 경우 읽기 작업도 Master로 라우팅됩니다.</p>
+            </div>
+
+            <div id="code-structure" class="clue hidden">
+                <h3>코드 구조</h3>
+                <div class="code-block">
+                    <div class="code-filename">MemberController.java</div>
+<pre>
+@RestController
+@RequestMapping("/api/members")
+public class MemberController {
+
+    private final MemberService memberService;
+
+    @PostMapping
+    public ResponseEntity<?> createMember(@RequestBody MemberRequest request) {
+        Member member = memberService.createMember(request);
+        return ResponseEntity.ok(member);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getMember(@PathVariable Long id) {
+        Member member = memberService.getMember(id);
+        return ResponseEntity.ok(member);
+    }
+}
+</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-filename">MemberService.java</div>
+<pre>
+@Service
+@RequiredArgsConstructor
+public class MemberService {
+
+    private final MemberRepository memberRepository;
+    private final MembershipService membershipService;
+
+    @Transactional
+    public Member createMember(MemberRequest request) {
+        Member member = Member.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .build();
+
+        return memberRepository.save(member);
+    }
+
+    // 주목: @Transactional 어노테이션 없음
+    public Member getMember(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + id));
+
+        // 회원의 멤버십 정보 조회
+        membershipService.getMembershipInfo(id);
+
+        return member;
+    }
+}
+</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-filename">MembershipService.java</div>
+<pre>
+@Service
+@RequiredArgsConstructor
+public class MembershipService {
+
+    private final MembershipRepository membershipRepository;
+
+    @Transactional(readOnly = true)
+    public MembershipInfo getMembershipInfo(Long memberId) {
+        return membershipRepository.findByMemberId(memberId)
+                .orElse(MembershipInfo.createDefault());
+    }
+}
+</pre>
+                </div>
+            </div>
+
+            <div id="error-logs" class="clue hidden">
+                <h3>에러 로그</h3>
+                <div class="error-message">
+2024-05-09 14:23:45.123 ERROR 1234 --- [nio-8080-exec-3] c.e.e.exception.GlobalExceptionHandler   : ResourceNotFoundException: Member not found with id: 10045
+
+2024-05-09 14:23:47.456 INFO  1234 --- [nio-8080-exec-4] c.e.e.controller.MemberController        : Member found with id: 10045
+
+2024-05-09 14:30:12.789 ERROR 1234 --- [nio-8080-exec-7] c.e.e.exception.GlobalExceptionHandler   : ResourceNotFoundException: Member not found with id: 10046
+
+2024-05-09 14:30:15.012 INFO  1234 --- [nio-8080-exec-8] c.e.e.controller.MemberController        : Member found with id: 10046
+</div>
+            </div>
+
+            <div id="db-logs" class="clue hidden">
+                <h3>데이터베이스 로그</h3>
+                <div class="logs-container">
+2024-05-09 14:23:40.111 [Connection ID: 45678] INSERT INTO members (name, email) VALUES ('홍길동', 'hong@example.com')
+2024-05-09 14:23:40.222 [Connection ID: 45678] COMMIT
+
+2024-05-09 14:23:45.000 [Connection ID: 45679] SELECT * FROM members WHERE id = 10045
+2024-05-09 14:23:45.100 [Connection ID: 45679] -- No rows returned
+
+2024-05-09 14:23:47.300 [Connection ID: 45680] SELECT * FROM members WHERE id = 10045
+2024-05-09 14:23:47.400 [Connection ID: 45680] -- 1 row returned
+
+2024-05-09 14:30:10.500 [Connection ID: 45681] INSERT INTO members (name, email) VALUES ('김철수', 'kim@example.com')
+2024-05-09 14:30:10.600 [Connection ID: 45681] COMMIT
+
+2024-05-09 14:30:12.700 [Connection ID: 45682] SELECT * FROM members WHERE id = 10046
+2024-05-09 14:30:12.800 [Connection ID: 45682] -- No rows returned
+
+2024-05-09 14:30:15.000 [Connection ID: 45683] SELECT * FROM members WHERE id = 10046
+2024-05-09 14:30:15.100 [Connection ID: 45683] -- 1 row returned
+</div>
+            </div>
+
+            <div class="diagnosis-options" id="diagnosis-section">
+                <h3>진단</h3>
+                <p>위의 단서들을 분석한 후, 가장 가능성이 높은 문제 원인을 선택하세요:</p>
+
+                <div class="diagnosis-option" onclick="selectDiagnosis(this, 1)">
+                    <strong>1. 데이터베이스 연결 풀 크기 부족</strong>
+                    <p>HikariCP의 maximum-pool-size가 10으로 설정되어 있어, 트래픽이 많을 때 연결 부족으로 쿼리가 실패합니다.</p>
+                </div>
+
+                <div class="diagnosis-option" onclick="selectDiagnosis(this, 2)">
+                    <strong>2. Master-Slave 복제 지연 (Replication Lag)</strong>
+                    <p>데이터가 Master에 기록된 후 Slave로 복제되기 전에 Slave에서 조회해서 데이터를 찾지 못합니다.</p>
+                </div>
+
+                <div class="diagnosis-option" onclick="selectDiagnosis(this, 3)">
+                    <strong>3. 트랜잭션 스냅샷 문제</strong>
+                    <p>auto-commit: false 설정과 getMember() 메서드에 @Transactional 어노테이션이 없어서 트랜잭션이 커밋/롤백되지 않고, 이로 인해 스냅샷이 갱신되지 않습니다.</p>
+                </div>
+
+                <div class="diagnosis-option" onclick="selectDiagnosis(this, 4)">
+                    <strong>4. JPA 영속성 컨텍스트 캐싱 문제</strong>
+                    <p>open-in-view: true 설정으로 인해 이전 요청의 영속성 컨텍스트가 캐시된 데이터를 반환하고 있습니다.</p>
+                </div>
+
+                <div class="diagnosis-option" onclick="selectDiagnosis(this, 5)">
+                    <strong>5. 데이터베이스 인덱스 누락</strong>
+                    <p>members 테이블에 id 컬럼의 인덱스가 없어서 간헐적으로 쿼리 성능이 저하됩니다.</p>
+                </div>
+            </div>
+
+            <div id="feedback" class="feedback hidden"></div>
+
+            <button id="submit-btn" class="btn btn-secondary" onclick="submitDiagnosis()" disabled>진단 제출</button>
+
+            <div id="solution" class="solution-form hidden">
+                <h3>해결 방법</h3>
+                <p>어떻게 이 문제를 해결할 수 있을까요? 가장 적절한 해결책을 선택하세요:</p>
+
+                <div class="diagnosis-option" onclick="selectSolution(this, 1)">
+                    <strong>1. 데이터베이스 연결 풀 크기 증가</strong>
+                    <p>HikariCP의 maximum-pool-size를 20 이상으로 늘립니다.</p>
+                </div>
+
+                <div class="diagnosis-option" onclick="selectSolution(this, 2)">
+                    <strong>2. 모든 읽기 작업을 Master 데이터베이스로 라우팅</strong>
+                    <p>모든 서비스 메서드에 @Transactional을 추가하여 읽기 작업도 Master에서 수행되도록 합니다.</p>
+                </div>
+
+                <div class="diagnosis-option" onclick="selectSolution(this, 3)">
+                    <strong>3. getMember() 메서드에 @Transactional(readOnly = true) 추가</strong>
+                    <p>조회 메서드에 트랜잭션 어노테이션을 추가하여 메서드 종료 시 트랜잭션이 커밋되고 스냅샷이 갱신되도록 합니다.</p>
+                </div>
+
+                <div class="diagnosis-option" onclick="selectSolution(this, 4)">
+                    <strong>4. open-in-view 설정을 false로 변경</strong>
+                    <p>영속성 컨텍스트의 생명주기를 트랜잭션 범위로 제한합니다.</p>
+                </div>
+
+                <div class="diagnosis-option" onclick="selectSolution(this, 5)">
+                    <strong>5. 데이터베이스의 트랜잭션 격리 수준을 READ COMMITTED로 변경</strong>
+                    <p>더 낮은 격리 수준을 사용하여 각 SELECT 문마다 새로운 스냅샷을 사용하도록 합니다.</p>
+                </div>
+
+                <button id="solution-btn" class="btn btn-secondary" onclick="submitSolution()" disabled>해결책 제출</button>
+            </div>
+
+            <div id="solution-feedback" class="feedback hidden"></div>
+
+            <div id="explanation" class="section hidden">
+                <h3>상세 설명</h3>
+                <p>이 문제는 데이터베이스 트랜잭션 관리와 관련된 전형적인 사례입니다.</p>
+
+                <h4>문제의 원인:</h4>
+                <p>문제의 핵심은 <strong>트랜잭션 스냅샷의 갱신이 이루어지지 않는 것</strong>입니다. 구체적인 원인은 다음과 같습니다:</p>
+                <ul>
+                    <li><code>hikari.auto-commit: false</code> 설정으로 인해 자동 커밋이 비활성화되어 있습니다.</li>
+                    <li><code>getMember()</code> 메서드에 <code>@Transactional</code> 어노테이션이 없어 트랜잭션 경계(COMMIT/ROLLBACK)가 없습니다.</li>
+                    <li>MySQL의 기본 격리 수준인 REPEATABLE READ에서는 트랜잭션 시작 시점의 스냅샷을 사용합니다.</li>
+                    <li>따라서, 이전 스냅샷을 사용하는 세션에서는 새로 추가된 회원 데이터가 보이지 않습니다.</li>
+                </ul>
+
+                <h4>해결책 설명:</h4>
+                <p>가장 간단하고 효과적인 해결책은 <strong>getMember() 메서드에 @Transactional(readOnly = true) 어노테이션을 추가</strong>하는 것입니다. 이렇게 하면:</p>
+                <ul>
+                    <li>메서드가 트랜잭션 범위 내에서 실행됩니다.</li>
+                    <li>메서드 종료 시 트랜잭션이 커밋되어 스냅샷이 갱신됩니다.</li>
+                    <li>readOnly=true 옵션을 사용하면 데이터베이스의 최적화된 읽기 전용 트랜잭션을 활용할 수 있습니다.</li>
+                </ul>
+
+                <p>다른 해결책들의 문제점:</p>
+                <ul>
+                    <li><strong>연결 풀 크기 증가</strong>: 이 문제는 연결 풀 크기와 관련이 없습니다.</li>
+                    <li><strong>모든 읽기 작업을 Master로 라우팅</strong>: 부하 분산의 이점을 잃게 됩니다.</li>
+                    <li><strong>open-in-view 설정 변경</strong>: 이 설정은 지연 로딩과 관련된 문제를 해결하지만, 이 경우의 스냅샷 문제를 해결하지 않습니다.</li>
+                    <li><strong>격리 수준 변경</strong>: 시스템 전체의 격리 수준을 변경하는 것은 다른 부작용을 초래할 수 있습니다.</li>
+                </ul>
+
+                <h4>더 알아보기:</h4>
+                <p>이 문제는 다음과 같은 개념들을 이해하는 데 도움이 됩니다:</p>
+                <ul>
+                    <li>데이터베이스 트랜잭션 격리 수준</li>
+                    <li>MVCC (다중 버전 동시성 제어)</li>
+                    <li>스프링의 트랜잭션 관리</li>
+                    <li>Master-Slave 아키텍처에서의 데이터 일관성</li>
+                </ul>
+
+                <button class="btn btn-primary" onclick="nextCase()">다음 사례로</button>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script>
+        let selectedDiagnosis = null;
+        let selectedSolution = null;
+        let score = 0;
+        let totalScore = 0;
+
+        function showClue(clueId) {
+            const clueElement = document.getElementById(clueId); // clueElement 정의 추가
+            clueElement.classList.toggle('hidden'); // 토글 기능 추가
+        }
+
+        function selectDiagnosis(element, diagnosisId) {
+            // 기존에 선택된 항목의 선택 해제
+            const options = document.querySelectorAll('#diagnosis-section .diagnosis-option');
+            options.forEach(option => option.classList.remove('selected'));
+
+            // 새로 선택한 항목 표시
+            element.classList.add('selected');
+            selectedDiagnosis = diagnosisId;
+
+            // 제출 버튼 활성화
+            document.getElementById('submit-btn').disabled = false;
+        }
+
+        function selectSolution(element, solutionId) {
+            // 기존에 선택된 항목의 선택 해제
+            const options = document.querySelectorAll('#solution .diagnosis-option');
+            options.forEach(option => option.classList.remove('selected'));
+
+            // 새로 선택한 항목 표시
+            element.classList.add('selected');
+            selectedSolution = solutionId;
+
+            // 제출 버튼 활성화
+            document.getElementById('solution-btn').disabled = false;
+        }
+
+        function submitDiagnosis() {
+            const feedbackElement = document.getElementById('feedback');
+
+            // 정답은 3번 (트랜잭션 스냅샷 문제)
+            if (selectedDiagnosis === 3) {
+                feedbackElement.innerHTML = "<p>정확합니다! 이 문제는 트랜잭션 스냅샷이 갱신되지 않아 발생하는 문제입니다.</p>";
+                feedbackElement.classList.add('correct');
+                feedbackElement.classList.remove('incorrect');
+                score += 1;
+            } else {
+                feedbackElement.innerHTML = "<p>아쉽게도 그것은 주된 원인이 아닙니다. 다시 한번 단서들을 검토해보세요.</p>";
+                feedbackElement.classList.add('incorrect');
+                feedbackElement.classList.remove('correct');
+            }
+
+            feedbackElement.classList.remove('hidden');
+            document.getElementById('solution').classList.remove('hidden');
+            totalScore += 1;
+            updateScore();
+
+            // 선택 상태 초기화
+            selectedDiagnosis = null;
+            const options = document.querySelectorAll('#diagnosis-section .diagnosis-option');
+            options.forEach(option => option.classList.remove('selected'));
+            document.getElementById('submit-btn').disabled = true;
+        }
+
+        function submitSolution() {
+            const feedbackElement = document.getElementById('solution-feedback');
+
+            // 정답은 3번 (getMember() 메서드에 @Transactional(readOnly = true) 추가)
+            if (selectedSolution === 3) {
+                feedbackElement.innerHTML = "<p>정확합니다! getMember() 메서드에 @Transactional(readOnly = true)를 추가하는 것이 가장 적절한 해결책입니다.</p>";
+                feedbackElement.classList.add('correct');
+                feedbackElement.classList.remove('incorrect');
+                score += 1;
+            } else {
+                feedbackElement.innerHTML = "<p>그 해결책은 최적의 방법이 아닙니다. 다시 한번 단서들을 검토해보세요.</p>";
+                feedbackElement.classList.add('incorrect');
+                feedbackElement.classList.remove('correct');
+            }
+
+            feedbackElement.classList.remove('hidden');
+            document.getElementById('explanation').classList.remove('hidden');
+            totalScore += 1;
+            updateScore();
+
+            // 선택 상태 초기화
+            selectedSolution = null;
+            const options = document.querySelectorAll('#solution .diagnosis-option');
+            options.forEach(option => option.classList.remove('selected'));
+            document.getElementById('solution-btn').disabled = true;
+        }
+
+        function updateScore() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('totalScore').innerText = totalScore;
+            const progressBar = document.getElementById('progressBar');
+            const progressPercentage = (score / totalScore) * 100;
+            progressBar.style.width = progressPercentage + '%';
+        }
+        function nextCase() {
+            // 다음 사례로 이동하는 로직을 여기에 추가하세요.
+            alert("다음 사례로 이동합니다.");
+        }
+    </script>
+</body>
+</html>
