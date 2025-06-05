@@ -1,0 +1,228 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --background-color: #f9f9f9;
+    --card-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #dddddd;
+}
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: var(--card-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3 {
+    color: var(--primary-color);
+}
+
+.section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--card-color);
+}
+
+.scenario {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border-left: 5px solid var(--primary-color);
+}
+
+.hidden {
+    display: none;
+}
+
+.btn {
+    padding: 10px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #27ae60;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.clue {
+    background-color: #f8f9fa;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border-left: 4px solid var(--secondary-color);
+}
+
+.code-block {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    overflow-x: auto;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    border: 1px solid var(--border-color);
+}
+
+.code-block pre {
+    margin: 0;
+}
+
+.code-filename {
+    background-color: #e9ecef;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    border-radius: 3px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+.hint {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.error-message {
+    background-color: #ffeeee;
+    color: var(--danger-color);
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid var(--danger-color);
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    white-space: pre-wrap;
+}
+
+.solution-form {
+    background-color: #e9f7fe;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.diagnosis-options {
+    margin: 20px 0;
+}
+
+.diagnosis-option {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.diagnosis-option:hover {
+    background-color: #e0e0e0;
+}
+
+.selected {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.footer {
+    margin-top: 40px;
+    text-align: center;
+    color: #6c757d;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    margin: 20px 0;
+}
+
+.progress-bar {
+    height: 20px;
+    background-color: var(--primary-color);
+    border-radius: 5px;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.score-display {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.feedback {
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 5px;
+}
+
+.feedback.correct {
+    background-color: #d4edda;
+    border-left: 4px solid #28a745;
+}
+
+.feedback.incorrect {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.logs-container {
+    background-color: #000;
+    color: #00ff00;
+    padding: 15px;
+    border-radius: 5px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    margin: 15px 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .section {
+        padding: 15px;
+    }
+}
