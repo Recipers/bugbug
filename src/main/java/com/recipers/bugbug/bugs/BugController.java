@@ -16,7 +16,7 @@ public class BugController {
     private final BugService bugService;
 
     @GetMapping(value = "/{id}")
-    public String bugPage(@PathVariable(value = "id") Long id, Model model) {
+    public String bugPage(@PathVariable Long id, Model model) {
 
         Bug bug = bugService.findBugById(id);
         model.addAttribute("bug", bug);

@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko"
     xmlns:th="http://www.thymeleaf.org">
-<head th:fragment="defaultHead(title, scripts, links)">
+<head th:fragment="defaultHead(title, links)">
   <title th:text="${title} ?: 'BugBug'">BugBug</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <link rel="icon" th:href="@{/favicon.ico}" type="image/x-icon">
   <link th:href="@{/css/style.css}" rel="stylesheet">
   <script th:src="@{/js/common.js}"></script>
-  <th:block th:if="${scripts}">
-    <th:block th:replace="${scripts}"></th:block>
-  </th:block>
   <th:block th:if="${links}">
     <th:block th:replace="${links}"></th:block>
   </th:block>
