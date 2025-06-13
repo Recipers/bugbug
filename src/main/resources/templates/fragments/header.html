@@ -1,7 +1,94 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BugBug Header</title>
+</head>
 <body>
 <header class="header" th:fragment="header">
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-content">
+        <div class="navbar-brand">
+          <a href="/" class="brand-link">
+            <div class="brand-icon">
+              🐛
+            </div>
+            <span class="brand-text">BugBug</span>
+          </a>
+        </div>
+        <div class="navbar-menu">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a href="/bugs" class="nav-link">
+                문제
+              </a>
+            </li>
+            <!--/* 추후 확장 가능한 메뉴 */-->
+            <!--/*
+            <li class="nav-item">
+                <a href="/leaderboard" class="nav-link">
+                    랭킹
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/community" class="nav-link">
+                    커뮤니티
+                </a>
+            </li>
+            */-->
+          </ul>
+        </div>
+        <div class="navbar-actions">
+          <div th:if="${session.user == null}" class="auth-buttons desktop-only">
+            <a href="/login" class="btn btn-ghost btn-sm">
+              로그인
+            </a>
+            <a href="/signup" class="btn btn-primary btn-sm">
+              회원가입
+            </a>
+          </div>
+
+          <div th:if="${session.user != null}" class="user-menu">
+            <div class="user-dropdown" onclick="toggleUserMenu()">
+              <div class="user-avatar">
+                <img th:if="${session.user.profileImage}"
+                     th:src="${session.user.profileImage}"
+                     th:alt="${session.user.nickname}"
+                     class="avatar-img">
+                <div th:unless="${session.user.profileImage}"
+                     class="avatar-placeholder"
+                     th:text="${#strings.substring(session.user.nickname, 0, 1)}">U</div>
+              </div>
+              <span class="user-name" th:text="${session.user.nickname}">사용자</span>
+              <span class="dropdown-arrow">▼</span>
+            </div>
+
+            <div class="dropdown-menu" id="userDropdownMenu">
+              <div class="dropdown-header">
+                <div class="user-info">
+                  <div class="user-name-large" th:text="${session.user.nickname}">사용자</div>
+                  <div class="user-email" th:text="${session.user.email}">user@example.com</div>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <ul class="dropdown-list">
+                <li><a href="/profile" class="dropdown-link">마이페이지</a></li>
+                <li><a href="/progress" class="dropdown-link">진행 상황</a></li>
+                <li><a href="/achievements" class="dropdown-link">성취도</a></li>
+                <li><a href="/settings" class="dropdown-link">설정</a></li>
+              </ul>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-footer">
+                <a href="/logout" class="dropdown-link logout-link">로그아웃</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
 </header>
 </body>
 </html>
