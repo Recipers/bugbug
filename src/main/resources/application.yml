@@ -51,6 +51,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        show_sql: true
     hibernate:
       ddl-auto: create-drop
     defer-datasource-initialization: true # JPA DDL 실행 data.sql 실행
