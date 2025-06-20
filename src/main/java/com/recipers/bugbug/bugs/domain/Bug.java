@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,4 +30,17 @@ public class Bug extends BaseEntity {
 
     @Column
     private Integer baseLife;
+
+    @Builder
+    private Bug (
+        Long id,
+        String title,
+        String description,
+        Integer baseLife
+    ) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.baseLife = baseLife;
+    }
 }
